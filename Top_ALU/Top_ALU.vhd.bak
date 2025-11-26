@@ -1,0 +1,83 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity Top_ALU is
+    Port ( 
+        A, B : in STD_LOGIC_VECTOR(7 downto 0);
+        ALU_Sel : in STD_LOGIC_VECTOR(2 downto 0);
+        -- LEDs para banderas
+        LED_N, LED_Z, LED_V, LED_C : out STD_LOGIC;
+        -- 4 displays de 7 segmentos (0 al 3)
+        display0, display1, display2, display3 : out STD_LOGIC_VECTOR(6 downto 0)
+    );
+end Top_ALU;
+
+architecture Structural of Top_ALU is
+    
+    component ALU is
+        Port ( 
+            A, B : in STD_LOGIC_VECTOR(7 downto 0);
+            ALU_Sel : in STD_LOGIC_VECTOR(2 downto 0);
+            Result : out STD_LOGIC_VECTOR(7 downto 0);
+            N_flag, Z_flag, V_flag, C_flag : out STD_LOGIC
+        );
+    end component;
+    
+    component SevenSeg_Decoder is
+        Port ( 
+            binary_in : in STD_LOGIC_VECTOR(3 downto 0);
+            seg_out : out STD_LOGIC_VECTOR(6 downto 0)
+        );
+    end component;
+    
+    signal Result_int : STD_LOGIC_VECTOR(7 downto 0);
+    signal N_int, Z_int, V_int, C_int : STD_LOGIC;
+    
+begin
+
+    -- Instancia de la ALU
+    U1: ALU 
+        port map (
+            A => A,
+            B => B,
+            ALU_Sel => ALU_Sel,
+            Result => Result_int,
+            N_flag => N_int,
+            Z_flag => Z_int,
+            V_flag => V_int,
+            C_flag => C_int
+        );
+    
+    -- LEDs para banderas
+    LED_N <= N_int;
+    LED_Z <= Z_int;
+    LED_V <= V_int;
+    LED_C <= C_int;
+    
+    -- Displays para B:
+    -- display0: nibble bajo de B
+    DEC_B0: SevenSeg_Decoder port map (
+        binary_in => B(3 downto 0),
+        seg_out => display0
+    );
+    
+    -- display1: nibble alto de B  
+    DEC_B1: SevenSeg_Decoder port map (
+        binary_in => B(7 downto 4),
+        seg_out => display1
+    );
+    
+    -- Displays para Resultado:
+    -- display2: nibble bajo del resultado
+    DEC_R0: SevenSeg_Decoder port map (
+        binary_in => Result_int(3 downto 0),
+        seg_out => display2
+    );
+    
+    -- display3: nibble alto del resultado
+    DEC_R1: SevenSeg_Decoder port map (
+        binary_in => Result_int(7 downto 4),
+        seg_out => display3
+    );
+
+end Structural;

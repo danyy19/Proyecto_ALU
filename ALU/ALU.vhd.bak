@@ -1,0 +1,85 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity ALU is
+    Port ( 
+        A, B : in STD_LOGIC_VECTOR(7 downto 0);
+        ALU_Sel : in STD_LOGIC_VECTOR(2 downto 0);
+        Result : out STD_LOGIC_VECTOR(7 downto 0);
+        -- Banderas
+        N_flag, Z_flag, V_flag, C_flag : out STD_LOGIC
+    );
+end ALU;
+
+architecture Behavioral of ALU is
+    signal Result_int : STD_LOGIC_VECTOR(7 downto 0);
+    
+begin
+    ALU_PROCESS : process (A, B, ALU_Sel)
+        variable Sum_uns : unsigned(8 downto 0);
+        variable Sub_uns : unsigned(8 downto 0);
+    begin
+        case ALU_Sel is
+            when "000" => -- SUMA
+                Sum_uns := unsigned('0' & A) + unsigned('0' & B);
+                Result_int <= std_logic_vector(Sum_uns(7 downto 0));
+                
+                -- Negative Flag (N)
+                N_flag <= Sum_uns(7);
+                
+                -- Zero Flag (Z)
+                if (Sum_uns(7 downto 0) = x"00") then
+                    Z_flag <= '1';
+                else
+                    Z_flag <= '0';
+                end if;
+                
+                -- Overflow Flag (V)
+                if ((A(7)='0' and B(7)='0' and Sum_uns(7)='1') or 
+                    (A(7)='1' and B(7)='1' and Sum_uns(7)='0')) then
+                    V_flag <= '1';
+                else
+                    V_flag <= '0';
+                end if;
+                
+                -- Carry Flag (C)
+                C_flag <= Sum_uns(8);
+                
+            when "001" => -- RESTA
+                Sub_uns := unsigned('0' & A) - unsigned('0' & B);
+                Result_int <= std_logic_vector(Sub_uns(7 downto 0));
+                
+                -- Negative Flag (N)
+                N_flag <= Sub_uns(7);
+                
+                -- Zero Flag (Z)
+                if (Sub_uns(7 downto 0) = x"00") then
+                    Z_flag <= '1';
+                else
+                    Z_flag <= '0';
+                end if;
+                
+                -- Overflow Flag (V) para resta
+                if ((A(7)='0' and B(7)='1' and Sub_uns(7)='1') or 
+                    (A(7)='1' and B(7)='0' and Sub_uns(7)='0')) then
+                    V_flag <= '1';
+                else
+                    V_flag <= '0';
+                end if;
+                
+                -- Carry Flag (C) para resta
+                C_flag <= Sub_uns(8);
+                
+            when others =>
+                Result_int <= (others => '0');
+                N_flag <= '0';
+                Z_flag <= '0';
+                V_flag <= '0';
+                C_flag <= '0';
+        end case;
+    end process;
+    
+    Result <= Result_int;
+
+end Behavioral;
